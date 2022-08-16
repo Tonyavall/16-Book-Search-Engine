@@ -4,20 +4,11 @@ const { signToken } = require('../utils/auth');
 
 const resolvers = {
     Query: {
-        user: async (parent, {username}) => {
-            const foundUser = await User.findOne({
-                $or: [{ _id: _id }, { username: username }],
-            });
-        
-            if (!foundUser) {
-                return { message: 'Cannot find a user with this id!' }
-            }
-          
-            return foundUser
-        },
         me: async (parent, args, context) => {
             if (context.user) {
-              return User.findOne({ _id: context.user._id }).populate('thoughts');
+              return User
+                .findOne({ _id: context.user._id })
+                .populate('savedBooks');
             }
             throw new AuthenticationError('You need to be logged in!');
         },
@@ -51,7 +42,7 @@ const resolvers = {
         },
         saveBook: async (parent, { bookData }, context) => {
             try {
-                if (!context.user) return { message: 'You must be logged in!' }
+                if (!context.user) throw new AuthenticationError('You need to be logged in!');
 
                 const updatedUser = await User.findOneAndUpdate(
                     { _id: context.user._id },
@@ -64,16 +55,23 @@ const resolvers = {
                 return err;
             }
         },
-        async deleteBook({ user, params }, res) {
-            const updatedUser = await User.findOneAndUpdate(
-              { _id: user._id },
-              { $pull: { savedBooks: { bookId: params.bookId } } },
-              { new: true }
-            );
-            if (!updatedUser) {
-              return res.status(404).json({ message: "Couldn't find user with this id!" });
+        async deleteBook(parent, { bookId }, context) {
+            try {
+                if (!context.user) throw new AuthenticationError('You need to be logged in!');
+
+                const updatedUser = await User.findOneAndUpdate(
+                  { _id: context.user.id },
+                  { $pull: { savedBooks: { bookId: bookId } } },
+                  { new: true }
+                );
+                if (!updatedUser) {
+                  return { message: "Couldn't find user with this id!" }
+                }
+                return updatedUser
+            } catch(err) { 
+                console.log(err)
+                return err
             }
-            return res.json(updatedUser);
         },
     }
 }
