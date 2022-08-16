@@ -33,7 +33,7 @@ export const SAVE_BOOK = gql`
     $link: String!,
     $title: String!
   ) {
-    addThought(
+    saveBook(
       authors: $authors
       description: $description
       bookId: $bookId
@@ -52,13 +52,16 @@ export const SAVE_BOOK = gql`
   }
 `;
 
-export const DELETE_BOOK = gql`
-  mutation deleteBook($_id: ID!) {
-    addThought(thoughtText: $thoughtText) {
+export const REMOVE_BOOK = gql`
+  mutation removeBook($bookId: String!) {
+    removeBook(bookId: $bookId) {
       _id
-      thoughtText
-      thoughtAuthor
-      createdAt
+      authors
+      description
+      bookId
+      image
+      link
+      title
     }
   }
 `;
