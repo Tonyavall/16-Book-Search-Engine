@@ -40,7 +40,8 @@ const resolvers = {
       
             return { token, user };
         },
-        saveBook: async (parent, args, context) => {
+        saveBook: async (parent, savedBook, context) => {
+            console.log(savedBook)
             try {
                 if (!context.user) throw new AuthenticationError('You need to be logged in!');
 
@@ -48,7 +49,7 @@ const resolvers = {
                     { _id: context.user._id },
                     // A set is an array of unique items, will never duplicate the same book
                     // Here we spread the payload properties which are the book properties
-                    { $addToSet: { savedBooks: { ...args } } },
+                    { $addToSet: { savedBooks: savedBook } },
                     { new: true, runValidators: true }
                 );
                 // We return the destructured savedBooks array for this user
