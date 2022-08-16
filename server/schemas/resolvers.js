@@ -14,7 +14,7 @@ const resolvers = {
         },
     },
     Mutation: {
-        createUser: async (parent, {username, email, password}) => {
+        addUser: async (parent, {username, email, password}) => {
             const user = await User.create({username, email, password});
             if (!user) {
                 return res.status(400).json({ message: 'Something is wrong!' });
@@ -44,30 +44,37 @@ const resolvers = {
             try {
                 if (!context.user) throw new AuthenticationError('You need to be logged in!');
 
-                const updatedUser = await User.findOneAndUpdate(
+                const { savedBooks } = await User.findOneAndUpdate(
                     { _id: context.user._id },
+                    // A set is an array of unique items, will never duplicate the same book
+                    // Here we spread the payload properties which are the book properties
                     { $addToSet: { savedBooks: { ...args } } },
                     { new: true, runValidators: true }
                 );
-                return updatedUser
+                // We return the destructured savedBooks array for this user
+                return savedBooks
             } catch (err) {
                 console.log(err);
                 return err;
             }
         },
-        deleteBook: async (parent, { bookId }, context) => {
+        removeBook: async (parent, { bookId }, context) => {
             try {
                 if (!context.user) throw new AuthenticationError('You need to be logged in!');
 
-                const updatedUser = await User.findOneAndUpdate(
+                // we probably don't need a default value for saved books here but it's
+                // something to consider for future destructured properties just in case
+                // they are undefined
+                const { savedBooks = [] } = await User.findOneAndUpdate(
                   { _id: context.user.id },
                   { $pull: { savedBooks: { bookId: bookId } } },
                   { new: true }
                 );
-                if (!updatedUser) {
+                // The only case here where savedBooks is undefined is if the user doesn't exist
+                if (savedBooks === undefined) {
                   return { message: "Couldn't find user with this id!" }
                 }
-                return updatedUser
+                return savedBooks
             } catch(err) { 
                 console.log(err)
                 return err
