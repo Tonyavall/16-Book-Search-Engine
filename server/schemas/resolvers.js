@@ -40,8 +40,7 @@ const resolvers = {
       
             return { token, user };
         },
-        saveBook: async (parent, savedBook, context) => {
-            console.log(savedBook)
+        saveBook: async (parent, {authors, description, bookId, image, title}, context) => {
             try {
                 if (!context.user) throw new AuthenticationError('You need to be logged in!');
 
@@ -49,7 +48,7 @@ const resolvers = {
                     { _id: context.user._id },
                     // A set is an array of unique items, will never duplicate the same book
                     // Here we spread the payload properties which are the book properties
-                    { $addToSet: { savedBooks: savedBook } },
+                    { $addToSet: { savedBooks: {authors, description, bookId, image, title} } },
                     { new: true, runValidators: true }
                 );
                 // We return the destructured savedBooks array for this user
@@ -66,16 +65,16 @@ const resolvers = {
                 // we probably don't need a default value for saved books here but it's
                 // something to consider for future destructured properties just in case
                 // they are undefined
-                const { savedBooks = [] } = await User.findOneAndUpdate(
-                  { _id: context.user.id },
+                const updatedUser = await User.findOneAndUpdate(
+                  { _id: context.user._id },
                   { $pull: { savedBooks: { bookId: bookId } } },
                   { new: true }
                 );
                 // The only case here where savedBooks is undefined is if the user doesn't exist
-                if (savedBooks === undefined) {
+                if (!updatedUser) {
                   return { message: "Couldn't find user with this id!" }
                 }
-                return savedBooks
+                return updatedUser
             } catch(err) { 
                 console.log(err)
                 return err

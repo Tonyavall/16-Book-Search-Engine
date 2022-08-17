@@ -11,12 +11,14 @@ import { useQuery } from '@apollo/client';
 
 import { useEffect } from 'react';
 
+import { removeBookId } from '../utils/localStorage';
+
 const SavedBooks = () => {
   const [userData, setUserData] = useState({});
   const {loading, data} = useQuery(QUERY_ME);
   const [removeBook] = useMutation(REMOVE_BOOK)
 
-  useEffect(()=> {
+  useEffect(() => {
     setUserData(data?.me)
   }, [data])
 
@@ -29,12 +31,13 @@ const SavedBooks = () => {
     }
 
     try {
-      const { data } = await removeBook({
-        variables: bookId
+      const updatedUser = await removeBook({
+        variables: { bookId }
       })
 
       // The returned data is the savedBooks array
-      setUserData({...userData, data})
+      setUserData({...updatedUser})
+      removeBookId(bookId)
     } catch (err) {
       console.error(err);
     }
